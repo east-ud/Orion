@@ -104,10 +104,10 @@ class screenit(object):
         self.my_window.addstr(8, _x, 'AvgPx: ', curses.color_pair(1) | curses.A_BOLD)
         self.my_window.addstr(8, _x + 18, f'{conn_obj.all_avgLongPx} / {conn_obj.all_avgShortPx}            ', curses.color_pair(4) | curses.A_BOLD)
 
-        self.my_window.addstr(9, _x, 'Crnt PNL:    ', curses.color_pair(1) | curses.A_BOLD)
-        self.my_window.addstr(9, _x + 30, 'FwdsL:    ', curses.color_pair(1) | curses.A_BOLD)
-        self.my_window.addstr(9, _x + 18, f'{conn_obj.all_unbPNL}  ', curses.color_pair(5) | curses.A_BOLD)
-        self.my_window.addstr(9, _x + 38, f'{conn_obj.fwds_PNL:,.5f}', curses.color_pair(5) | curses.A_BOLD)
+        self.my_window.addstr(9, _x, 'Crnt PNL (coins):    ', curses.color_pair(1) | curses.A_BOLD)
+        self.my_window.addstr(10, _x + 30, 'Fwds:    ', curses.color_pair(1) | curses.A_BOLD)
+        self.my_window.addstr(9, _x + 18, f'{conn_obj.all_unbPNL}   ', curses.color_pair(5) | curses.A_BOLD)
+        self.my_window.addstr(10, _x + 38, f'{conn_obj.fwds_PNL:,.5f}', curses.color_pair(5) | curses.A_BOLD)
 
 
 
@@ -123,7 +123,7 @@ class screenit(object):
         self.my_window.addstr(12, _x, 'MR AvgPx: ', curses.color_pair(1) | curses.A_BOLD)
         self.my_window.addstr(12, _x + 18, f'{conn_obj.MR_bid_BE_dist} {conn_obj.MR_avgLongPx} / {conn_obj.MR_avgShortPx} {conn_obj.MR_off_BE_dist}  ', curses.color_pair(4) | curses.A_BOLD)
 
-        self.my_window.addstr(13, _x, 'MR PNL:    ', curses.color_pair(1) | curses.A_BOLD)
+        self.my_window.addstr(13, _x, 'MR PNL (coins):    ', curses.color_pair(1) | curses.A_BOLD)
         self.my_window.addstr(13, _x + 18, f'{conn_obj.MR_unbPNL} ', curses.color_pair(5) | curses.A_BOLD)
 
 

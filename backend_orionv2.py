@@ -38,9 +38,9 @@ suffix = '.log'
 
 #logging setup
 logfile = os.path.join(dir_name, filename + suffix)
-# logging.basicConfig(format='%(asctime)s:%(msecs)d:%(levelname) -8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG, filename=logfile)
+logging.basicConfig(format='%(asctime)s:%(msecs)d:%(levelname) -8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG, filename=logfile)
 #logging.basicConfig(format='%(asctime)s:%(msecs)d:%(levelname) -8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%Y-%m-%d:%H:%M:%S', level=logging.WARNING, filename=logfile)
-logging.basicConfig(format='%(asctime)s:%(msecs)d:%(levelname) -8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%H:%M:%S', level=logging.INFO, filename=logfile)
+#$logging.basicConfig(format='%(asctime)s:%(msecs)d:%(levelname) -8s [%(filename)s:%(lineno)d] %(message)s', datefmt='%H:%M:%S', level=logging.INFO, filename=logfile)
 logging.getLogger("asyncio").setLevel(logging.DEBUG)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -292,8 +292,8 @@ class conn(object):
         self.prev_cumPNL = 0  # track prev cumul PNL
         self.all_unbPNL = 0  # PNL from positions that have not yet been hedged
         self.fwds_PNL = 0  # captures PNL from bid/offer on fwds
-        # self.all_unbPNL_longs = 0  # PNL from positions that have not yet been hedged
-        # self.all_unbPNL_shorts = 0  # PNL from positions that have not yet been hedged
+        self.all_unbPNL_longs = 0  # PNL from positions that have not yet been hedged
+        self.all_unbPNL_shorts = 0  # PNL from positions that have not yet been hedged
 
         self.all_longNOP = 0  # NOP from all trades executed during session
         self.all_shortNOP = 0  # NOP from all trades executed during session
@@ -322,7 +322,6 @@ class conn(object):
         self.MR_bid_BE_dist = None
         self.MR_off_BE_dist = None
 
-
         self.total_NOP = 0 # addition of two portfolios
 
         self.orion_orders = []
@@ -341,10 +340,11 @@ class conn(object):
 
         self.index_label = self.ccy + '-USD'
         self.swap = self.ccy + '-USD-SWAP'
-        self.fwd1 = self.ccy + '-USD-220401'
-        self.fwd2 = self.ccy + '-USD-220408'
+        self.fwd1 = self.ccy + '-USD-220408'
+        self.fwd2 = self.ccy + '-USD-220415'
         self.fwd3 = self.ccy + '-USD-220624'
         self.fwd4 = self.ccy + '-USD-220930'
+        #self.fwd4 = self.ccy + '-USD-220930'
 
         # list of instruments to trade live
         self.included = {'mmSwB', 'mmSwO', 'mmF1B', 'mmF1O', 'mmF2B', 'mmF2O', 'mmF3B', 'mmF3O'}  # list of instruments we want trading
@@ -530,9 +530,10 @@ class conn(object):
     def reset_NOPs(self):
         # resets NOP counters
 
-        self.prev_cumPNL = self.all_cumPNL  # tracks prev cumulatice PNL
-        self.all_cumPNL += self.all_longVal + self.all_shortVal  # sums value of hedges
-        log.debug(f'reset_NOPS> pre-reset longVal = {self.all_longVal} shortVal = {self.all_shortVal}.  long_val+short_val= {(self.all_longVal + self.all_shortVal):,.3f}')
+        self.prev_cumPNL = round(self.all_cumPNL, 5)  # tracks prev cumulatice PNL
+        self.all_cumPNL += round((((1 / self.all_avgLongPx) - (1 / self.all_avgShortPx)) * self.all_NOP * 10), 5)   # sums value of hedges
+
+        log.debug(f'reset_NOPS> pre-reset longNOP = {self.all_longNOP} shortNOP = {self.all_shortNOP} longVal = {self.all_longVal} shortVal = {self.all_shortVal} cumPNL = {self.all_cumPNL}')
 
         self.all_longNOP = 0
         self.all_shortNOP = 0
@@ -2525,9 +2526,19 @@ class conn(object):
         def update_NOP_PNL():
             # update running PNL from unhedged positions
             mid = self.vwap_swap['mid']
-            self.all_unbPNL = round((self.all_longNOP * mid) + self.all_longVal + (self.all_shortNOP * mid) + self.all_shortVal, 5)
-            # self.all_unbPNL_longs = round((self.all_longNOP * mid) + self.all_longVal, 5)
-            # self.all_unbPNL_shorts = round((self.all_shortNOP * mid) + self.all_shortVal, 5)
+            if self.all_longNOP:
+                self.all_unbPNL_longs = round(self.all_longNOP * 10 * ((1 / self.all_avgLongPx) - (1 / mid)), 5)
+            else:
+                self.all_unbPNL_longs = 0
+
+            if self.all_shortNOP:
+
+                self.all_unbPNL_shorts = round(-self.all_shortNOP * 10 * ((1/mid) - (1 / self.all_avgShortPx)), 5)
+            else:
+                self.all_unbPNL_shorts = 0
+
+            self.all_unbPNL = round(self.all_unbPNL_longs + self.all_unbPNL_shorts, 5)
+
 
             # MR PNL
             self.MR_unbPNL = round((self.MR_longNOP * mid) + self.MR_longVal - (self.MR_shortNOP * mid) + self.MR_shortVal, 5)
